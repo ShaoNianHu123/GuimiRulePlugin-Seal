@@ -152,11 +152,22 @@ if (!seal.ext.find('GuimiRulePlugin')) {
       .gmst 理智 20
       .gmst 血量上限 43
       .gmst 灵性 30
+      .gmst 体型基数 10
 
-—— 海豹配套指令 ——
-.pc new <卡名>           新建角色卡
-.pc tag <卡名>           绑定本群使用的角色卡
-.nn <角色名>             设置角色名`;
+—— 常用录入示例 ——
+.gmst 力量 5
+.gmst 体质 4
+.gmst 敏捷 3
+.gmst 灵感 6
+.gmst 意志 5
+.gmst 教育 4
+.gmst 幸运 3
+.gmst 格斗 2
+.gmst 闪避 1
+.gmst 理智 20
+.gmst 血量上限 43
+.gmst 灵性 30
+.gmst 序列 9`;
 
   // ============================================================
   //  工具函数
@@ -194,70 +205,35 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     return s.replace(/^\s+|\s+$/g, '');
   }
 
-  // 读取玩家属性值（尝试中英文别名），返回数值
-  // 优先级：seal.vars($m) > seal.format(COC角色卡) > 0
+  // 读取玩家属性值（尝试中英文别名）
   function getCardAttr(ctx, statName) {
     const aliases = ATTR_ALIASES[statName];
-
-    // 1) 先尝试 seal.vars ($m 变量)
-    if (aliases) {
-      for (let i = 0; i < aliases.length; i++) {
-        const result = seal.vars.intGet(ctx, '$m' + aliases[i]);
-        if (result[1] && result[0] !== 0) return result[0];
-      }
-    } else {
+    if (!aliases) {
       const result = seal.vars.intGet(ctx, '$m' + statName);
+      if (result[1]) return result[0];
+      return 0;
+    }
+    for (let i = 0; i < aliases.length; i++) {
+      const result = seal.vars.intGet(ctx, '$m' + aliases[i]);
       if (result[1] && result[0] !== 0) return result[0];
     }
-
-    // 2) 回退：通过 seal.format 从 COC/DND 角色卡读取（兼容 .st 录入的数据）
-    try {
-      const formatted = seal.format(ctx, '{' + statName + '}');
-      const parsed = parseInt(formatted, 10);
-      if (!isNaN(parsed) && parsed !== 0) return parsed;
-    } catch (e) {
-      // seal.format 可能失败，忽略
-    }
-
     return 0;
   }
 
   // 读取技能等级（返回卡片存储的等级值 0~6）
-  // 优先级：seal.vars($m) > seal.format(COC角色卡) > 0
   function getCardSkill(ctx, skillName) {
-    // 1) seal.vars
     const result = seal.vars.intGet(ctx, '$m' + skillName);
-    if (result[1] && result[0] !== 0) return result[0];
-
-    // 2) seal.format 回退（兼容 .st 录入的 COC 角色卡数据）
-    try {
-      const formatted = seal.format(ctx, '{' + skillName + '}');
-      const parsed = parseInt(formatted, 10);
-      if (!isNaN(parsed) && parsed !== 0) return parsed;
-    } catch (e) {}
-
+    if (result[1]) return result[0];
     return 0;
   }
 
   // 读取理智值
-  // 优先级：seal.vars($m) > seal.format(COC角色卡) > 意志推算
   function getCardSan(ctx) {
-    // 1) seal.vars
     for (let i = 0; i < SAN_NAMES.length; i++) {
       const result = seal.vars.intGet(ctx, '$m' + SAN_NAMES[i]);
       if (result[1] && result[0] !== 0) return result[0];
     }
-
-    // 2) seal.format 回退（兼容 .st 录入的 COC 角色卡数据）
-    for (let i = 0; i < SAN_NAMES.length; i++) {
-      try {
-        const formatted = seal.format(ctx, '{' + SAN_NAMES[i] + '}');
-        const parsed = parseInt(formatted, 10);
-        if (!isNaN(parsed) && parsed !== 0) return parsed;
-      } catch (e) {}
-    }
-
-    // 3) 回退：理智 = 10 + 意志
+    // 回退：理智 = 10 + 意志
     const will = getCardAttr(ctx, '意志');
     if (will > 0) return 10 + will;
     return 10;
@@ -1095,5 +1071,5 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   seal.ext.registerStringConfig(ext, 'T_ERR_TOO_MANY', '"你应该去向伟大的宿命之环祈祷，这要观察的【命运】也太多了，我没这么大能耐。"');
   seal.ext.registerStringConfig(ext, 'T_ERR_GM_NO_TARGET', '请指定技能或属性名称，如 .gm 优势 力量');
   seal.ext.registerStringConfig(ext, 'T_ERR_EXCLUDED', '"{target}" 是衍生属性或特殊字段，无法直接检定。\n请使用 .gm <技能/属性名>，如 .gm 力量 或 .gm 格斗');
-  seal.ext.registerStringConfig(ext, 'T_ERR_NO_CARD', '尚未录入角色属性。请先用 .pc new <卡名> 创建角色卡，再用 .gmst <属性> <值> 录入属性。\n例：.gmst 力量 5、.gmst 格斗 2');
+  seal.ext.registerStringConfig(ext, 'T_ERR_NO_CARD', '尚未录入角色属性。请先用 .gmst <属性> <值> 录入属性。\n例：.gmst 力量 5\n    .gmst 格斗 2\n    .gmst 理智 20');
 }
