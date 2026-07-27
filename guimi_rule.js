@@ -750,7 +750,14 @@ if (!ext) {
       return (v && v !== 0) ? intStr(v) : '?';
     }
 
-    return nick + ' hp' + hpStr + ' 灵性' + vs(mp) + ' 敏捷' + vs(dex) + ' san' + vs(san);
+    const cardText = nick + ' hp' + hpStr + ' 灵性' + vs(mp) + ' 敏捷' + vs(dex) + ' san' + vs(san);
+
+    // 同步修改群名片（仅在群聊时生效）
+    try {
+      seal.setPlayerGroupCard(ctx, cardText);
+    } catch (e) {}
+
+    return cardText;
   }
 
   // ============================================================
