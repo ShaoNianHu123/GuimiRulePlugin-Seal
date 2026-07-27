@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         诡秘之主D20规则插件 (海豹移植版)
 // @author       少年狐 (ShaoNianHu123)
-// @version      1.0.0
+// @version      1.0.1
 // @description 诡秘之主D20跑团规则插件 —— 属性生成、D20检定、理智检定。从 OlivOS GuimiRulePlugin 移植到海豹 SealDice。
 // @timestamp    1752768000
 // @license      MIT
@@ -13,7 +13,7 @@
 // ============================================================
 
 if (!seal.ext.find('GuimiRulePlugin')) {
-  const ext = seal.ext.new('GuimiRulePlugin', '少年狐', '1.0.0');
+  const ext = seal.ext.new('GuimiRulePlugin', '少年狐', '1.0.1');
 
   // ============================================================
   //  可配置模板（对应 OlivOS msgCustom，WebUI 中可编辑）
@@ -61,6 +61,7 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   seal.ext.registerStringConfig(ext, 'T_SC_LOST', '☠ 理智归零，你已【失控】！');
   seal.ext.registerStringConfig(ext, 'T_SC_TRUE_MAD', '⚠⚠ 你已陷入【真疯】状态，难以沟通。');
   seal.ext.registerStringConfig(ext, 'T_SC_HALF_MAD', '⚠ 你已陷入【半疯】状态，获得随机疯狂倾向。');
+  seal.ext.registerStringConfig(ext, 'T_SC_OUT_OF_CONTROL', '⚡ 你出现【失控征兆】，外表呈现途径的失控特征。');
 
   // -- 先攻 --
   // {nick} {d20} {dex} {total}
@@ -122,18 +123,18 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     '锁匠': '敏捷', '射击': '敏捷', '手枪': '敏捷',
     '步枪': '敏捷', '猎枪': '敏捷', '机枪': '敏捷',
     '弓箭': '敏捷', '弩': '敏捷', '闪避': '敏捷',
-    '驾驶': '敏捷', '骑乘': '敏捷',
+    '驾驶': '敏捷', '骑乘': '敏捷', '厨艺': '敏捷',
     // 魅力相关
     '取悦': '魅力', '信誉': '魅力', '欺骗': '魅力',
     '说服': '魅力', '挑衅': '魅力', '心理学': '魅力',
     '心理引导': '魅力', '表演': '魅力', '乔装': '魅力',
+    '乐理': '魅力',
     // 灵感相关
     '聆听': '灵感', '侦查': '灵感', '搜索': '灵感',
     '读唇': '灵感', '追踪': '灵感', '机械维修': '灵感',
-    '贸易': '灵感', '厨艺': '灵感', '乐理': '灵感',
-    '歌唱': '灵感', '工艺制造': '灵感', '神秘学': '灵感',
+    '贸易': '灵感', '歌唱': '灵感', '工艺制造': '灵感', '神秘学': '灵感',
     '占卜': '灵感', '通灵': '灵感', '星象学': '灵感',
-    '仪式魔法': '灵感', '宗教': '灵感', '非凡之物学': '灵感',
+    '仪式魔法': '灵感', '非凡之物学': '灵感',
     '神秘历史学': '灵感', '非凡学识': '灵感',
     // 教育相关
     '图书馆使用': '教育', '领航': '教育', '生存': '教育',
@@ -143,6 +144,7 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     '社会学': '教育', '植物学': '教育', '农业': '教育',
     '天文学': '教育', '历史': '教育', '工程学': '教育',
     '博物学': '教育', '生物学': '教育', '科学': '教育',
+    '宗教': '教育',
     // 语言类 (教育)
     '鲁恩语': '教育', '因蒂斯语': '教育', '弗萨克语': '教育',
     '高原语': '教育', '伦堡语': '教育', '古弗萨克语': '教育',
@@ -651,6 +653,9 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     }
     if (newSan <= 2 && currentSan > 2) {
       lines.push(getTmpl('T_SC_TRUE_MAD'));
+    }
+    if (newSan <= 4 && currentSan > 4) {
+      lines.push(getTmpl('T_SC_OUT_OF_CONTROL'));
     }
     if (newSan <= 8 && currentSan > 8) {
       lines.push(getTmpl('T_SC_HALF_MAD'));
