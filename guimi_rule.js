@@ -754,9 +754,11 @@ if (!ext) {
 
     const cardText = nick + ' hp' + hpStr + ' 灵性' + vs(mp) + ' 敏捷' + vs(dex) + ' san' + vs(san);
 
-    // 同步修改群名片（仅在群聊时生效）
+    // 同步修改群名片（仅在群聊且机器人有管理员权限时生效）
     try {
       seal.setPlayerGroupCard(ctx, cardText);
+      // 同时设置自动名片模板，确保后续也能更新
+      seal.applyPlayerGroupCardByTemplate(ctx, cardText);
     } catch (e) {}
 
     return cardText;
