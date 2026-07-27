@@ -213,34 +213,70 @@ if (!ext) {
   }
 
   // 读取玩家属性值（尝试中英文别名）
+  // 优先级：seal.vars($m) > seal.format(角色卡) > 0
   function getCardAttr(ctx, statName) {
     const aliases = ATTR_ALIASES[statName];
-    if (!aliases) {
+
+    // 1) seal.vars ($m 变量)
+    if (aliases) {
+      for (let i = 0; i < aliases.length; i++) {
+        const result = seal.vars.intGet(ctx, '$m' + aliases[i]);
+        if (result[1] && result[0] !== 0) return result[0];
+      }
+    } else {
       const result = seal.vars.intGet(ctx, '$m' + statName);
-      if (result[1]) return result[0];
-      return 0;
-    }
-    for (let i = 0; i < aliases.length; i++) {
-      const result = seal.vars.intGet(ctx, '$m' + aliases[i]);
       if (result[1] && result[0] !== 0) return result[0];
     }
+
+    // 2) seal.format 回退（兼容 .st 录入的海豹角色卡数据）
+    const names = aliases ? [statName].concat(aliases) : [statName];
+    for (let i = 0; i < names.length; i++) {
+      try {
+        const formatted = seal.format(ctx, '{' + names[i] + '}');
+        const parsed = parseInt(formatted, 10);
+        if (!isNaN(parsed) && parsed !== 0) return parsed;
+      } catch (e) {}
+    }
+
     return 0;
   }
 
   // 读取技能等级（返回卡片存储的等级值 0~6）
+  // 优先级：seal.vars($m) > seal.format(角色卡) > 0
   function getCardSkill(ctx, skillName) {
+    // 1) seal.vars
     const result = seal.vars.intGet(ctx, '$m' + skillName);
-    if (result[1]) return result[0];
+    if (result[1] && result[0] !== 0) return result[0];
+
+    // 2) seal.format 回退
+    try {
+      const formatted = seal.format(ctx, '{' + skillName + '}');
+      const parsed = parseInt(formatted, 10);
+      if (!isNaN(parsed) && parsed !== 0) return parsed;
+    } catch (e) {}
+
     return 0;
   }
 
   // 读取理智值
+  // 优先级：seal.vars($m) > seal.format(角色卡) > 意志推算
   function getCardSan(ctx) {
+    // 1) seal.vars
     for (let i = 0; i < SAN_NAMES.length; i++) {
       const result = seal.vars.intGet(ctx, '$m' + SAN_NAMES[i]);
       if (result[1] && result[0] !== 0) return result[0];
     }
-    // 回退：理智 = 10 + 意志
+
+    // 2) seal.format 回退
+    for (let i = 0; i < SAN_NAMES.length; i++) {
+      try {
+        const formatted = seal.format(ctx, '{' + SAN_NAMES[i] + '}');
+        const parsed = parseInt(formatted, 10);
+        if (!isNaN(parsed) && parsed !== 0) return parsed;
+      } catch (e) {}
+    }
+
+    // 3) 回退：理智 = 10 + 意志
     const will = getCardAttr(ctx, '意志');
     if (will > 0) return 10 + will;
     return 10;
@@ -1117,3 +1153,35 @@ if (!ext) {
   seal.ext.registerStringConfig(ext, 'T_ERR_GM_NO_TARGET', '请指定技能或属性名称，如 .gm 优势 力量');
   seal.ext.registerStringConfig(ext, 'T_ERR_EXCLUDED', '"{target}" 是衍生属性或特殊字段，无法直接检定。\n请使用 .gm <技能/属性名>，如 .gm 力量 或 .gm 格斗');
   seal.ext.registerStringConfig(ext, 'T_ERR_NO_CARD', '尚未录入角色属性。请先用 .gmst <属性> <值> 录入属性。\n例：.gmst 力量 5\n    .gmst 格斗 2\n    .gmst 理智 20');
+
+  // ============================================================
+  //  注册 GM 规则模板（让海豹 .st/.pc 体系识别自定义属性）
+  // ============================================================
+
+  // 构建属性同义词 YAML
+  const attrAliasYaml = [];
+  attrAliasYaml.push('alias:');
+  for (const key in ATTR_ALIASES) {
+    if (ATTR_ALIASES.hasOwnProperty(key)) {
+      attrAliasYaml.push('  ' + key + ':');
+      for (let i = 0; i < ATTR_ALIASES[key].length; i++) {
+        attrAliasYaml.push('    - ' + ATTR_ALIASES[key][i]);
+      }
+    }
+  }
+  // 扩展属性（非基础8属性）
+  const extraAttrs = ['生命值', '血量', '血量上限', '生命值上限', '灵性值',
+    '物理防御', '意志防御', '体质防御', '灵体强度', '移动力',
+    '体型基数', '序列', '消化', '消化度', '位格', '神性补正'];
+  for (let i = 0; i < extraAttrs.length; i++) {
+    attrAliasYaml.push('  ' + extraAttrs[i] + ':');
+    attrAliasYaml.push('    - ' + extraAttrs[i]);
+  }
+
+  // 尝试注册规则模板
+  try {
+    seal.gameSystem.newTemplateByYaml(attrAliasYaml.join('\n'));
+  } catch (e) {
+    // 模板格式可能不兼容，静默失败——不影响核心功能
+  }
+}
