@@ -715,36 +715,46 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   // ============================================================
 
   function doSt(ctx, cmdArgs) {
-    let arg1 = cmdArgs.getArgN(1);
-    let arg2 = cmdArgs.getArgN(2);
+    const arg1 = cmdArgs.getArgN(1);
+    const arg2 = cmdArgs.getArgN(2);
 
     if (!arg1) {
-      return '用法: .gmst <属性名> <值>\n例：.gmst 力量 5\n    .gmst 格斗 2\n    .gmst 序列 9\n    .gmst 理智 20';
+      return '用法: .gmst <属性名> <值>\n例：.gmst 力量 5\n    .gmst 格斗 2\n    .gmst 序列 9\n    .gmst 理智 20\n\n支持批量录入（属性名+数字连续写）：\n例：.gmst 力量7体质6敏捷6魅力7灵感7意志6教育6幸运6';
     }
 
-    // 智能拆分：只有一个参数且末尾是数字时，自动拆成属性名+值
-    // 例：.gmst 幸运5 → 幸运 + 5；.gmst 格斗2 → 格斗 + 2
-    if (!arg2) {
-      const match = arg1.match(/^(.+?)(-?\d+)$/);
-      if (match) {
-        arg1 = match[1];
-        arg2 = match[2];
-      }
+    // 尝试批量解析：匹配连续的「属性名+数字」对
+    const pairs = [];
+    const re = /([\u4e00-\u9fa5a-zA-Z]+?)(-?\d+)/g;
+    let m;
+    while ((m = re.exec(arg1)) !== null) {
+      pairs.push({ name: m[1], value: parseInt(m[2], 10) });
     }
 
-    if (!arg2) {
-      // 查看属性值
+    // 无数字匹配 + 有 arg2 → 空格分隔录入（.gmst 力量 5）
+    if (pairs.length === 0 && arg2) {
+      const val = parseInt(arg2, 10);
+      if (isNaN(val)) return '值必须是数字';
+      seal.vars.intSet(ctx, '$m' + arg1, val);
+      return '已设置 ' + arg1 + ' = ' + intStr(val);
+    }
+
+    // 无数字匹配 + 无 arg2 → 查看属性值（.gmst 力量）
+    if (pairs.length === 0) {
       const val = getCardAttr(ctx, arg1);
       return arg1 + ' = ' + intStr(val);
     }
 
-    const val = parseInt(arg2, 10);
-    if (isNaN(val)) {
-      return '值必须是数字';
+    // 有匹配到属性-值对 → 逐个写入
+    for (let i = 0; i < pairs.length; i++) {
+      seal.vars.intSet(ctx, '$m' + pairs[i].name, pairs[i].value);
     }
 
-    seal.vars.intSet(ctx, '$m' + arg1, val);
-    return '已设置 ' + arg1 + ' = ' + intStr(val);
+    if (pairs.length === 1) {
+      return '已设置 ' + pairs[0].name + ' = ' + intStr(pairs[0].value);
+    }
+
+    const names = pairs.map(function(p) { return p.name + '=' + intStr(p.value); }).join(' ');
+    return '已录入 ' + pairs.length + ' 项：' + names;
   }
 
   // ============================================================
