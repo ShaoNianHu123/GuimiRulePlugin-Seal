@@ -715,11 +715,21 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   // ============================================================
 
   function doSt(ctx, cmdArgs) {
-    const arg1 = cmdArgs.getArgN(1);
-    const arg2 = cmdArgs.getArgN(2);
+    let arg1 = cmdArgs.getArgN(1);
+    let arg2 = cmdArgs.getArgN(2);
 
     if (!arg1) {
       return '用法: .gmst <属性名> <值>\n例：.gmst 力量 5\n    .gmst 格斗 2\n    .gmst 序列 9\n    .gmst 理智 20';
+    }
+
+    // 智能拆分：只有一个参数且末尾是数字时，自动拆成属性名+值
+    // 例：.gmst 幸运5 → 幸运 + 5；.gmst 格斗2 → 格斗 + 2
+    if (!arg2) {
+      const match = arg1.match(/^(.+?)(-?\d+)$/);
+      if (match) {
+        arg1 = match[1];
+        arg2 = match[2];
+      }
     }
 
     if (!arg2) {
