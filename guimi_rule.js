@@ -9,11 +9,18 @@
 // ==/UserScript==
 
 // ============================================================
-//  扩展注册
+//  扩展注册（重载 JS 时先清理旧扩展，防止重复触发）
 // ============================================================
 
-if (!seal.ext.find('GuimiRulePlugin')) {
-  const ext = seal.ext.new('GuimiRulePlugin', '少年狐', '0.0.1');
+let ext = seal.ext.find('GuimiRulePlugin');
+if (!ext) {
+  ext = seal.ext.new('GuimiRulePlugin', '少年狐', '0.0.1');
+} else {
+  // 重载时清理旧指令映射，防止新旧 solve 同时触发
+  for (const key in ext.cmdMap) {
+    delete ext.cmdMap[key];
+  }
+}
 
   // ============================================================
   //  配置数据
@@ -1110,4 +1117,3 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   seal.ext.registerStringConfig(ext, 'T_ERR_GM_NO_TARGET', '请指定技能或属性名称，如 .gm 优势 力量');
   seal.ext.registerStringConfig(ext, 'T_ERR_EXCLUDED', '"{target}" 是衍生属性或特殊字段，无法直接检定。\n请使用 .gm <技能/属性名>，如 .gm 力量 或 .gm 格斗');
   seal.ext.registerStringConfig(ext, 'T_ERR_NO_CARD', '尚未录入角色属性。请先用 .gmst <属性> <值> 录入属性。\n例：.gmst 力量 5\n    .gmst 格斗 2\n    .gmst 理智 20');
-}
