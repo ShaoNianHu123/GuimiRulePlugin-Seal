@@ -16,66 +16,6 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   const ext = seal.ext.new('GuimiRulePlugin', '少年狐', '0.0.1');
 
   // ============================================================
-  //  可配置模板（对应 OlivOS msgCustom，WebUI 中可编辑）
-  //  键名与 OlivOS 原版一致，变量说明见注释
-  // ============================================================
-
-  // -- 属性生成 --
-  // {nick}
-  seal.ext.registerStringConfig(ext, 'T_ATTR_TITLE', '<{nick}>命运的馈赠在暗处已标注好了价码：');
-  // 无变量
-  seal.ext.registerStringConfig(ext, 'T_ATTR_V4_NOTE', '（4.0属性为测试内容，非最终版本）');
-
-  // -- D20 检定 --
-  // {nick} {target} {tag}
-  seal.ext.registerStringConfig(ext, 'T_D20_TITLE', '<{nick}>对【{target}】进行检定：{tag}');
-  // {d20} {attr_display} {skill_info}
-  seal.ext.registerStringConfig(ext, 'T_D20_LINE', 'rd20({d20}) + {attr_display}{skill_info}');
-  // {total}
-  seal.ext.registerStringConfig(ext, 'T_D20_RESULT', '= {total}');
-  // {total}
-  seal.ext.registerStringConfig(ext, 'T_D20_CRIT_SUCCESS', '『大成功！』命运的眷顾降临于你。');
-  // {total}
-  seal.ext.registerStringConfig(ext, 'T_D20_CRIT_FAIL', '『大失败！』命运对你露出了恶意的微笑。');
-  // {d1} {d2} {d20}
-  seal.ext.registerStringConfig(ext, 'T_D20_TAG_ADV', '【奖励投】{d1}/{d2}→取高→{d20}');
-  // {d1} {d2} {d20}
-  seal.ext.registerStringConfig(ext, 'T_D20_TAG_DIS', '【惩罚投】{d1}/{d2}→取低→{d20}');
-  // 无变量
-  seal.ext.registerStringConfig(ext, 'T_D20_TAG_MANUAL', '【手动】');
-
-  // -- SC 理智检定 --
-  // {nick}
-  seal.ext.registerStringConfig(ext, 'T_SC_TITLE', '<{nick}>进行理智检定：');
-  // {d20} {san}
-  seal.ext.registerStringConfig(ext, 'T_SC_CHECK', 'rd20({d20}) vs 理智({san})');
-  // {d20} {san}
-  seal.ext.registerStringConfig(ext, 'T_SC_SUCCESS', '{d20} ≤ {san}，【理智检定成功】');
-  // {d20} {san}
-  seal.ext.registerStringConfig(ext, 'T_SC_FAIL', '{d20} > {san}，【理智检定失败】');
-  // {expr} {loss}
-  seal.ext.registerStringConfig(ext, 'T_SC_LOSS', '损失理智: {expr} = {loss}');
-  // {old} {new}
-  seal.ext.registerStringConfig(ext, 'T_SC_CHANGE', '理智变化: {old} → {new}');
-  // 无变量
-  seal.ext.registerStringConfig(ext, 'T_SC_LOST', '☠ 理智归零，你已【失控】！');
-  seal.ext.registerStringConfig(ext, 'T_SC_TRUE_MAD', '⚠⚠ 你已陷入【真疯】状态，难以沟通。');
-  seal.ext.registerStringConfig(ext, 'T_SC_HALF_MAD', '⚠ 你已陷入【半疯】状态，获得随机疯狂倾向。');
-  seal.ext.registerStringConfig(ext, 'T_SC_OUT_OF_CONTROL', '⚡ 你出现【失控征兆】，外表呈现途径的失控特征。');
-
-  // -- 先攻 --
-  // {nick} {d20} {dex} {total}
-  seal.ext.registerStringConfig(ext, 'T_RI_CHECK', '<{nick}>先攻检定：rd20({d20}) + 敏捷({dex}) = {total}  已加入先攻列表');
-
-  // -- 错误提示 --
-  seal.ext.registerStringConfig(ext, 'T_ERR_NO_SKILL', '请指定技能或属性名称，如 .gm力量 或 .gm格斗');
-  seal.ext.registerStringConfig(ext, 'T_ERR_PARAM', '参数错误');
-  seal.ext.registerStringConfig(ext, 'T_ERR_TOO_MANY', '"你应该去向伟大的宿命之环祈祷，这要观察的【命运】也太多了，我没这么大能耐。"');
-  seal.ext.registerStringConfig(ext, 'T_ERR_GM_NO_TARGET', '请指定技能或属性名称，如 .gm 优势 力量');
-  seal.ext.registerStringConfig(ext, 'T_ERR_EXCLUDED', '"{target}" 是衍生属性或特殊字段，无法直接检定。\n请使用 .gm <技能/属性名>，如 .gm 力量 或 .gm 格斗');
-  seal.ext.registerStringConfig(ext, 'T_ERR_NO_CARD', '尚未录入角色属性。请先用 .pc new <卡名> 创建角色卡，再用 .gmst <属性> <值> 录入属性。\n例：.gmst 力量 5、.gmst 格斗 2');
-
-  // ============================================================
   //  配置数据
   // ============================================================
 
@@ -1061,4 +1001,64 @@ if (!seal.ext.find('GuimiRulePlugin')) {
 
   // 注册扩展
   seal.ext.register(ext);
+
+  // ============================================================
+  //  可配置模板（对应 OlivOS msgCustom，WebUI 中可编辑）
+  //  必须在 seal.ext.register(ext) 之后调用
+  // ============================================================
+
+  // -- 属性生成 --
+  // {nick}
+  seal.ext.registerStringConfig(ext, 'T_ATTR_TITLE', '<{nick}>命运的馈赠在暗处已标注好了价码：');
+  // 无变量
+  seal.ext.registerStringConfig(ext, 'T_ATTR_V4_NOTE', '（4.0属性为测试内容，非最终版本）');
+
+  // -- D20 检定 --
+  // {nick} {target} {tag}
+  seal.ext.registerStringConfig(ext, 'T_D20_TITLE', '<{nick}>对【{target}】进行检定：{tag}');
+  // {d20} {attr_display} {skill_info}
+  seal.ext.registerStringConfig(ext, 'T_D20_LINE', 'rd20({d20}) + {attr_display}{skill_info}');
+  // {total}
+  seal.ext.registerStringConfig(ext, 'T_D20_RESULT', '= {total}');
+  // {total}
+  seal.ext.registerStringConfig(ext, 'T_D20_CRIT_SUCCESS', '『大成功！』命运的眷顾降临于你。');
+  // {total}
+  seal.ext.registerStringConfig(ext, 'T_D20_CRIT_FAIL', '『大失败！』命运对你露出了恶意的微笑。');
+  // {d1} {d2} {d20}
+  seal.ext.registerStringConfig(ext, 'T_D20_TAG_ADV', '【奖励投】{d1}/{d2}→取高→{d20}');
+  // {d1} {d2} {d20}
+  seal.ext.registerStringConfig(ext, 'T_D20_TAG_DIS', '【惩罚投】{d1}/{d2}→取低→{d20}');
+  // 无变量
+  seal.ext.registerStringConfig(ext, 'T_D20_TAG_MANUAL', '【手动】');
+
+  // -- SC 理智检定 --
+  // {nick}
+  seal.ext.registerStringConfig(ext, 'T_SC_TITLE', '<{nick}>进行理智检定：');
+  // {d20} {san}
+  seal.ext.registerStringConfig(ext, 'T_SC_CHECK', 'rd20({d20}) vs 理智({san})');
+  // {d20} {san}
+  seal.ext.registerStringConfig(ext, 'T_SC_SUCCESS', '{d20} ≤ {san}，【理智检定成功】');
+  // {d20} {san}
+  seal.ext.registerStringConfig(ext, 'T_SC_FAIL', '{d20} > {san}，【理智检定失败】');
+  // {expr} {loss}
+  seal.ext.registerStringConfig(ext, 'T_SC_LOSS', '损失理智: {expr} = {loss}');
+  // {old} {new}
+  seal.ext.registerStringConfig(ext, 'T_SC_CHANGE', '理智变化: {old} → {new}');
+  // 无变量
+  seal.ext.registerStringConfig(ext, 'T_SC_LOST', '☠ 理智归零，你已【失控】！');
+  seal.ext.registerStringConfig(ext, 'T_SC_TRUE_MAD', '⚠⚠ 你已陷入【真疯】状态，难以沟通。');
+  seal.ext.registerStringConfig(ext, 'T_SC_HALF_MAD', '⚠ 你已陷入【半疯】状态，获得随机疯狂倾向。');
+  seal.ext.registerStringConfig(ext, 'T_SC_OUT_OF_CONTROL', '⚡ 你出现【失控征兆】，外表呈现途径的失控特征。');
+
+  // -- 先攻 --
+  // {nick} {d20} {dex} {total}
+  seal.ext.registerStringConfig(ext, 'T_RI_CHECK', '<{nick}>先攻检定：rd20({d20}) + 敏捷({dex}) = {total}  已加入先攻列表');
+
+  // -- 错误提示 --
+  seal.ext.registerStringConfig(ext, 'T_ERR_NO_SKILL', '请指定技能或属性名称，如 .gm力量 或 .gm格斗');
+  seal.ext.registerStringConfig(ext, 'T_ERR_PARAM', '参数错误');
+  seal.ext.registerStringConfig(ext, 'T_ERR_TOO_MANY', '"你应该去向伟大的宿命之环祈祷，这要观察的【命运】也太多了，我没这么大能耐。"');
+  seal.ext.registerStringConfig(ext, 'T_ERR_GM_NO_TARGET', '请指定技能或属性名称，如 .gm 优势 力量');
+  seal.ext.registerStringConfig(ext, 'T_ERR_EXCLUDED', '"{target}" 是衍生属性或特殊字段，无法直接检定。\n请使用 .gm <技能/属性名>，如 .gm 力量 或 .gm 格斗');
+  seal.ext.registerStringConfig(ext, 'T_ERR_NO_CARD', '尚未录入角色属性。请先用 .pc new <卡名> 创建角色卡，再用 .gmst <属性> <值> 录入属性。\n例：.gmst 力量 5、.gmst 格斗 2');
 }
