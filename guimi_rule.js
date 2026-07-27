@@ -194,35 +194,70 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     return s.replace(/^\s+|\s+$/g, '');
   }
 
-  // 读取玩家属性值（尝试中英文别名），返回 [value, exists]
+  // 读取玩家属性值（尝试中英文别名），返回数值
+  // 优先级：seal.vars($m) > seal.format(COC角色卡) > 0
   function getCardAttr(ctx, statName) {
     const aliases = ATTR_ALIASES[statName];
-    if (!aliases) {
+
+    // 1) 先尝试 seal.vars ($m 变量)
+    if (aliases) {
+      for (let i = 0; i < aliases.length; i++) {
+        const result = seal.vars.intGet(ctx, '$m' + aliases[i]);
+        if (result[1] && result[0] !== 0) return result[0];
+      }
+    } else {
       const result = seal.vars.intGet(ctx, '$m' + statName);
-      if (result[1]) return result[0];
-      return 0;
-    }
-    for (let i = 0; i < aliases.length; i++) {
-      const result = seal.vars.intGet(ctx, '$m' + aliases[i]);
       if (result[1] && result[0] !== 0) return result[0];
     }
+
+    // 2) 回退：通过 seal.format 从 COC/DND 角色卡读取（兼容 .st 录入的数据）
+    try {
+      const formatted = seal.format(ctx, '{' + statName + '}');
+      const parsed = parseInt(formatted, 10);
+      if (!isNaN(parsed) && parsed !== 0) return parsed;
+    } catch (e) {
+      // seal.format 可能失败，忽略
+    }
+
     return 0;
   }
 
   // 读取技能等级（返回卡片存储的等级值 0~6）
+  // 优先级：seal.vars($m) > seal.format(COC角色卡) > 0
   function getCardSkill(ctx, skillName) {
+    // 1) seal.vars
     const result = seal.vars.intGet(ctx, '$m' + skillName);
-    if (result[1]) return result[0];
+    if (result[1] && result[0] !== 0) return result[0];
+
+    // 2) seal.format 回退（兼容 .st 录入的 COC 角色卡数据）
+    try {
+      const formatted = seal.format(ctx, '{' + skillName + '}');
+      const parsed = parseInt(formatted, 10);
+      if (!isNaN(parsed) && parsed !== 0) return parsed;
+    } catch (e) {}
+
     return 0;
   }
 
   // 读取理智值
+  // 优先级：seal.vars($m) > seal.format(COC角色卡) > 意志推算
   function getCardSan(ctx) {
+    // 1) seal.vars
     for (let i = 0; i < SAN_NAMES.length; i++) {
       const result = seal.vars.intGet(ctx, '$m' + SAN_NAMES[i]);
       if (result[1] && result[0] !== 0) return result[0];
     }
-    // 回退：理智 = 10 + 意志
+
+    // 2) seal.format 回退（兼容 .st 录入的 COC 角色卡数据）
+    for (let i = 0; i < SAN_NAMES.length; i++) {
+      try {
+        const formatted = seal.format(ctx, '{' + SAN_NAMES[i] + '}');
+        const parsed = parseInt(formatted, 10);
+        if (!isNaN(parsed) && parsed !== 0) return parsed;
+      } catch (e) {}
+    }
+
+    // 3) 回退：理智 = 10 + 意志
     const will = getCardAttr(ctx, '意志');
     if (will > 0) return 10 + will;
     return 10;
