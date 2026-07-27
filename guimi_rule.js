@@ -680,17 +680,17 @@ if (!seal.ext.find('GuimiRulePlugin')) {
   function doSn(ctx) {
     const nick = getDisplayName(ctx);
 
-    // hp: 优先读血量，回退读生命
-    const hpResult = seal.vars.intGet(ctx, '$m血量');
-    let hp = hpResult[1] ? hpResult[0] : 0;
-    if (hp === 0) {
-      const lifeResult = seal.vars.intGet(ctx, '$m生命');
-      hp = lifeResult[1] ? lifeResult[0] : 0;
+    // hp：尝试多种常见属性名
+    function tryRead(keys) {
+      for (let i = 0; i < keys.length; i++) {
+        const r = seal.vars.intGet(ctx, '$m' + keys[i]);
+        if (r[1] && r[0] !== 0) return r[0];
+      }
+      return 0;
     }
 
-    // 血量上限
-    const maxHpResult = seal.vars.intGet(ctx, '$m血量上限');
-    const maxHp = maxHpResult[1] ? maxHpResult[0] : 0;
+    const hp = tryRead(['血量', '生命', '生命值', 'hp', 'HP']);
+    const maxHp = tryRead(['血量上限', '生命值上限', '最大生命值', 'maxhp', 'maxHp']);
 
     let hpStr;
     if (maxHp > 0) {
@@ -700,7 +700,7 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     }
 
     const dex = getCardAttr(ctx, '敏捷');
-    const mp = getCardAttr(ctx, '灵性');
+    const mp = tryRead(['灵性', '灵性值', 'lingx', 'mp', 'MP']);
     const san = getCardSan(ctx);
 
     function vs(v) {
