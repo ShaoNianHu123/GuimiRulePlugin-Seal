@@ -735,6 +735,7 @@ if (!seal.ext.find('GuimiRulePlugin')) {
       const val = parseInt(arg2, 10);
       if (isNaN(val)) return '值必须是数字';
       seal.vars.intSet(ctx, '$m' + arg1, val);
+      autoSyncMaxHp(ctx, arg1, val);
       return '已设置 ' + arg1 + ' = ' + intStr(val);
     }
 
@@ -747,6 +748,7 @@ if (!seal.ext.find('GuimiRulePlugin')) {
     // 有匹配到属性-值对 → 逐个写入
     for (let i = 0; i < pairs.length; i++) {
       seal.vars.intSet(ctx, '$m' + pairs[i].name, pairs[i].value);
+      autoSyncMaxHp(ctx, pairs[i].name, pairs[i].value);
     }
 
     if (pairs.length === 1) {
@@ -755,6 +757,22 @@ if (!seal.ext.find('GuimiRulePlugin')) {
 
     const names = pairs.map(function(p) { return p.name + '=' + intStr(p.value); }).join(' ');
     return '已录入 ' + pairs.length + ' 项：' + names;
+  }
+
+  // 录入血量时自动同步上限（如果上限尚未设置）
+  function autoSyncMaxHp(ctx, name, value) {
+    const hpAliases = ['血量', '生命', '生命值', 'hp', 'HP'];
+    const maxHpAliases = ['血量上限', '生命值上限', '最大生命值', 'maxhp', 'maxHp'];
+
+    if (hpAliases.indexOf(name) === -1) return;
+
+    // 检查是否已有上限值
+    for (let i = 0; i < maxHpAliases.length; i++) {
+      const r = seal.vars.intGet(ctx, '$m' + maxHpAliases[i]);
+      if (r[1] && r[0] !== 0) return; // 已有上限，不覆盖
+    }
+
+    seal.vars.intSet(ctx, '$m血量上限', value);
   }
 
   // ============================================================
