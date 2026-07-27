@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         诡秘之主D20规则插件 (海豹移植版)
 // @author       少年狐 (ShaoNianHu123)
-// @version      1.0.1
+// @version      0.0.1
 // @description 诡秘之主D20跑团规则插件 —— 属性生成、D20检定、理智检定。从 OlivOS GuimiRulePlugin 移植到海豹 SealDice。
 // @timestamp    1752768000
 // @license      MIT
@@ -13,7 +13,7 @@
 // ============================================================
 
 if (!seal.ext.find('GuimiRulePlugin')) {
-  const ext = seal.ext.new('GuimiRulePlugin', '少年狐', '1.0.1');
+  const ext = seal.ext.new('GuimiRulePlugin', '少年狐', '0.0.1');
 
   // ============================================================
   //  可配置模板（对应 OlivOS msgCustom，WebUI 中可编辑）
