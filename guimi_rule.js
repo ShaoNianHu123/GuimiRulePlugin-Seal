@@ -153,7 +153,6 @@ if (!ext) {
   .gmsc 1d2/1d4         成功损失1d2，失败损失1d4
 .gmri                先攻检定（rd20 + 敏捷）
 .gminit list/.clr/del 先攻列表管理
-.gmsn                 查看角色卡摘要
 .gmst <属性> <值>     录入属性或技能等级(0~6)
   例：.gmst 力量 5
       .gmst 格斗 2
@@ -718,49 +717,6 @@ if (!ext) {
     }
   }
 
-  // ============================================================
-  //  角色卡摘要 .gmsn
-  // ============================================================
-
-  function doSn(ctx) {
-    const nick = getDisplayName(ctx);
-
-    // hp：尝试多种常见属性名
-    function tryRead(keys) {
-      for (let i = 0; i < keys.length; i++) {
-        const r = seal.vars.intGet(ctx, '$m' + keys[i]);
-        if (r[1] && r[0] !== 0) return r[0];
-      }
-      return 0;
-    }
-
-    const hp = tryRead(['血量', '生命', '生命值', 'hp', 'HP']);
-    const maxHp = tryRead(['血量上限', '生命值上限', '最大生命值', 'maxhp', 'maxHp']);
-
-    let hpStr;
-    if (maxHp > 0) {
-      hpStr = intStr(hp) + '/' + intStr(maxHp);
-    } else {
-      hpStr = hp !== 0 ? intStr(hp) : '?';
-    }
-
-    const dex = getCardAttr(ctx, '敏捷');
-    const mp = tryRead(['灵性', '灵性值', 'lingx', 'mp', 'MP']);
-    const san = getCardSan(ctx);
-
-    function vs(v) {
-      return (v && v !== 0) ? intStr(v) : '?';
-    }
-
-    const cardText = nick + ' hp' + hpStr + ' 灵性' + vs(mp) + ' 敏捷' + vs(dex) + ' san' + vs(san);
-
-    // 同步修改群名片
-    try {
-      seal.setPlayerGroupCard(ctx, cardText);
-    } catch (e) {}
-
-    return cardText;
-  }
 
   // ============================================================
   //  属性录入 .gmst
@@ -1069,16 +1025,6 @@ if (!ext) {
     return seal.ext.newCmdExecuteResult(true);
   };
 
-  // -- .gmsn --
-  const cmdGMSN = seal.ext.newCmdItemInfo();
-  cmdGMSN.name = 'gmsn';
-  cmdGMSN.help = '查看当前角色卡摘要（HP/灵性/敏捷/理智）';
-  cmdGMSN.solve = (ctx, msg, cmdArgs) => {
-    const result = doSn(ctx);
-    seal.replyToSender(ctx, msg, result);
-    return seal.ext.newCmdExecuteResult(true);
-  };
-
   // -- .gmst --
   const cmdGMST = seal.ext.newCmdItemInfo();
   cmdGMST.name = 'gmst';
@@ -1097,7 +1043,6 @@ if (!ext) {
   ext.cmdMap['gmsc'] = cmdGMSC;
   ext.cmdMap['gmri'] = cmdGMRI;
   ext.cmdMap['gminit'] = cmdGMINIT;
-  ext.cmdMap['gmsn'] = cmdGMSN;
   ext.cmdMap['gmst'] = cmdGMST;
 
   // 注册扩展（仅首次，重载时跳过避免重复注册）
