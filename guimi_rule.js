@@ -13,10 +13,12 @@
 // ============================================================
 
 let ext = seal.ext.find('GuimiRulePlugin');
+let isNew = false;
 if (!ext) {
   ext = seal.ext.new('GuimiRulePlugin', '少年狐', '0.0.1');
+  isNew = true;
 } else {
-  // 重载时清理旧指令映射，防止新旧 solve 同时触发
+  // 重载时清理旧指令映射
   for (const key in ext.cmdMap) {
     delete ext.cmdMap[key];
   }
@@ -1098,8 +1100,10 @@ if (!ext) {
   ext.cmdMap['gmsn'] = cmdGMSN;
   ext.cmdMap['gmst'] = cmdGMST;
 
-  // 注册扩展
-  seal.ext.register(ext);
+  // 注册扩展（仅首次，重载时跳过避免重复注册）
+  if (isNew) {
+    seal.ext.register(ext);
+  }
 
   // ============================================================
   //  可配置模板（对应 OlivOS msgCustom，WebUI 中可编辑）
