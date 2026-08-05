@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         诡秘之主D20规则插件 (海豹移植版)
 // @author       少年狐 (ShaoNianHu123)
-// @version      0.0.1
-// @description 诡秘之主D20跑团规则插件 —— 属性生成、D20检定、理智检定。从 OlivOS GuimiRulePlugin 移植到海豹 SealDice。
+// @version      1.0.0
+// @description 诡秘之主D20跑团规则插件 —— 属性生成、D20检定、理智检定、先攻管理。从 OlivOS GuimiRulePlugin 移植到海豹 SealDice。
 // @timestamp    1752768000
 // @license      MIT
 // @homepageURL  https://github.com/ShaoNianHu123/GuimiRulePlugin-Seal
@@ -15,7 +15,7 @@
 let ext = seal.ext.find('GuimiRulePlugin');
 let isNew = false;
 if (!ext) {
-  ext = seal.ext.new('GuimiRulePlugin', '少年狐', '0.0.1');
+  ext = seal.ext.new('GuimiRulePlugin', '少年狐', '1.0.0');
   isNew = true;
 } else {
   // 重载时清理旧指令映射
@@ -24,9 +24,9 @@ if (!ext) {
   }
 }
 
-  // ============================================================
-  //  配置数据
-  // ============================================================
+// ============================================================
+//  配置数据
+// ============================================================
 
   const MAX_GEN = 10;
 
@@ -291,7 +291,7 @@ if (!ext) {
     return SKILL_LEVELS[skillValue];
   }
 
-  // 获取显示名称：.nn 昵称 > 卡片姓名 > 用户ID
+  // 获取显示名称：玩家昵称 > 用户ID
   function getDisplayName(ctx) {
     const name = ctx.player.name;
     if (name && name !== '') return name;
@@ -458,6 +458,39 @@ if (!ext) {
       result += '\n\n' + getTmpl('T_ATTR_V4_NOTE');
     }
     return result;
+  }
+
+  // 按数量生成属性并回复（返回是否已处理）
+  function genAndReply(ctx, msg, count, isV4) {
+    if (count < 1) {
+      seal.replyToSender(ctx, msg, getTmpl('T_ERR_PARAM'));
+      return true;
+    }
+    if (count > MAX_GEN) {
+      seal.replyToSender(ctx, msg, getTmpl('T_ERR_TOO_MANY'));
+      return true;
+    }
+    const nick = getDisplayName(ctx);
+    let result = render('T_ATTR_TITLE', {nick: nick});
+    for (let i = 0; i < count; i++) {
+      result += '\n\n' + formatAttrs(generateAttrs(), isV4);
+    }
+    seal.replyToSender(ctx, msg, result);
+    return true;
+  }
+
+  // 处理优势/劣势关键词（返回是否已处理）
+  function handleAdvDis(ctx, msg, tail, keyword, mode) {
+    if (tail.indexOf(keyword + ' ') === 0 || tail.indexOf(keyword) === 0) {
+      const inner = trim(tail.substring(keyword.length));
+      if (inner === '' || inner === keyword) {
+        seal.replyToSender(ctx, msg, getTmpl('T_ERR_GM_NO_TARGET'));
+        return true;
+      }
+      seal.replyToSender(ctx, msg, doGMCheck(ctx, inner, mode));
+      return true;
+    }
+    return false;
   }
 
   // ============================================================
@@ -799,54 +832,28 @@ if (!ext) {
     let count = 1;
 
     if (!tail || tail === '' || tail === '3.0' || tail === '3.5') {
-      isV4 = false;
-      count = 1;
+      // 默认生成 1 套 3.5 版
     } else if (tail === '4.0') {
       isV4 = true;
-      count = 1;
     } else if (/^\d+$/.test(tail)) {
       count = parseInt(tail, 10);
-      if (count < 1) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_PARAM'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      if (count > MAX_GEN) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_TOO_MANY'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
     } else if (tail.indexOf('4.0') === 0) {
       isV4 = true;
       const numPart = trim(tail.substring(3));
       if (numPart !== '' && /^\d+$/.test(numPart)) {
         count = parseInt(numPart, 10);
-        if (count < 1) {
-          seal.replyToSender(ctx, msg, getTmpl('T_ERR_PARAM'));
-          return seal.ext.newCmdExecuteResult(true);
-        }
-        if (count > MAX_GEN) {
-          seal.replyToSender(ctx, msg, getTmpl('T_ERR_TOO_MANY'));
-          return seal.ext.newCmdExecuteResult(true);
-        }
       } else if (numPart !== '') {
-        // tail 可能是一个技能名/属性名，交由 .gm 处理（通过 gm 的 onCommandReceived 或直接路由）
-        // 这里我们将其作为 .gm 检定来处理
-        const result = doGMCheck(ctx, tail);
-        seal.replyToSender(ctx, msg, result);
+        // 4.0 后跟技能名 → 直接走 .gm 检定
+        seal.replyToSender(ctx, msg, doGMCheck(ctx, tail));
         return seal.ext.newCmdExecuteResult(true);
       }
     } else {
-      // tail 不是已知的子命令，当作 .gm 目标处理
-      const result = doGMCheck(ctx, tail);
-      seal.replyToSender(ctx, msg, result);
+      // 未知参数 → 当作 .gm 目标处理
+      seal.replyToSender(ctx, msg, doGMCheck(ctx, tail));
       return seal.ext.newCmdExecuteResult(true);
     }
 
-    const nick = getDisplayName(ctx);
-    let result = render('T_ATTR_TITLE', {nick: nick});
-    for (let i = 0; i < count; i++) {
-      result += '\n\n' + formatAttrs(generateAttrs(), isV4);
-    }
-    seal.replyToSender(ctx, msg, result);
+    genAndReply(ctx, msg, count, isV4);
     return seal.ext.newCmdExecuteResult(true);
   };
 
@@ -867,44 +874,16 @@ if (!ext) {
     }
 
     // 优势/劣势 关键词
-    if (tail.indexOf('优势 ') === 0 || tail.indexOf('优势') === 0) {
-      const inner = trim(tail.substring(2));
-      if (inner === '' || inner === '优势') {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_GM_NO_TARGET'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      const result = doGMCheck(ctx, inner, 'adv');
-      seal.replyToSender(ctx, msg, result);
+    if (handleAdvDis(ctx, msg, tail, '优势', 'adv')) {
       return seal.ext.newCmdExecuteResult(true);
     }
-    if (tail.indexOf('劣势 ') === 0 || tail.indexOf('劣势') === 0) {
-      const inner = trim(tail.substring(2));
-      if (inner === '' || inner === '劣势') {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_GM_NO_TARGET'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      const result = doGMCheck(ctx, inner, 'dis');
-      seal.replyToSender(ctx, msg, result);
+    if (handleAdvDis(ctx, msg, tail, '劣势', 'dis')) {
       return seal.ext.newCmdExecuteResult(true);
     }
 
     // 纯数字 → 当 .诡秘 属性生成
     if (/^\d+$/.test(tail)) {
-      const num = parseInt(tail, 10);
-      if (num < 1) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_PARAM'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      if (num > MAX_GEN) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_TOO_MANY'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      const nick = getDisplayName(ctx);
-      let result = render('T_ATTR_TITLE', {nick: nick});
-      for (let i = 0; i < num; i++) {
-        result += '\n\n' + formatAttrs(generateAttrs(), false);
-      }
-      seal.replyToSender(ctx, msg, result);
+      genAndReply(ctx, msg, parseInt(tail, 10), false);
       return seal.ext.newCmdExecuteResult(true);
     }
 
@@ -925,21 +904,7 @@ if (!ext) {
     }
     // 纯数字 → 属性生成
     if (/^\d+$/.test(tail)) {
-      const num = parseInt(tail, 10);
-      if (num < 1) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_PARAM'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      if (num > MAX_GEN) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_TOO_MANY'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      const nick = getDisplayName(ctx);
-      let result = render('T_ATTR_TITLE', {nick: nick});
-      for (let i = 0; i < num; i++) {
-        result += '\n\n' + formatAttrs(generateAttrs(), false);
-      }
-      seal.replyToSender(ctx, msg, result);
+      genAndReply(ctx, msg, parseInt(tail, 10), false);
       return seal.ext.newCmdExecuteResult(true);
     }
     const result = doGMCheck(ctx, tail, 'adv');
@@ -958,21 +923,7 @@ if (!ext) {
       return seal.ext.newCmdExecuteResult(true);
     }
     if (/^\d+$/.test(tail)) {
-      const num = parseInt(tail, 10);
-      if (num < 1) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_PARAM'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      if (num > MAX_GEN) {
-        seal.replyToSender(ctx, msg, getTmpl('T_ERR_TOO_MANY'));
-        return seal.ext.newCmdExecuteResult(true);
-      }
-      const nick = getDisplayName(ctx);
-      let result = render('T_ATTR_TITLE', {nick: nick});
-      for (let i = 0; i < num; i++) {
-        result += '\n\n' + formatAttrs(generateAttrs(), false);
-      }
-      seal.replyToSender(ctx, msg, result);
+      genAndReply(ctx, msg, parseInt(tail, 10), false);
       return seal.ext.newCmdExecuteResult(true);
     }
     const result = doGMCheck(ctx, tail, 'dis');
