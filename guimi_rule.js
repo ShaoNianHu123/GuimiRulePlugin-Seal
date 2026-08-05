@@ -123,10 +123,12 @@ if (!ext) {
   // 理智相关属性名
   const SAN_NAMES = ['理智', 'san', 'SAN', 'sanity'];
 
-  // .gm 检定排除列表
+  // .gm 检定排除列表（衍生属性/特殊字段不可直接检定）
   const GM_EXCLUDED_TARGETS = {
     '序列': true, '消化': true, '消化度': true, '位格': true,
-    '理智': true, '血量': true, '血量上限': true, '灵性': true, '灵性值': true,
+    '理智': true, '血量': true, '血量上限': true, '生命值': true,
+    '生命值上限': true, '灵性': true, '灵性值': true, '灵体强度': true,
+    '移动力': true, '物理防御': true, '意志防御': true, '体质防御': true,
     '神性补正': true, 'san': true, 'SAN': true, 'sanity': true,
   };
 
@@ -316,12 +318,12 @@ if (!ext) {
     // 模糊匹配属性
     for (let i = 0; i < ATTRS_V3.length; i++) {
       if (ATTRS_V3[i].name === input || ATTRS_V3[i].name.indexOf(input) === 0) {
-        return [input, true];
+        return [ATTRS_V3[i].name, true];
       }
     }
     for (let i = 0; i < ATTRS_V4.length; i++) {
       if (ATTRS_V4[i].name === input || ATTRS_V4[i].name.indexOf(input) === 0) {
-        return [input, true];
+        return [ATTRS_V4[i].name, true];
       }
     }
     return [input, false]; // 未知，当技能处理
