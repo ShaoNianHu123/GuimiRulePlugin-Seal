@@ -116,6 +116,8 @@ if (!ext) {
     '心灵': ['心灵', 'lingx', 'LINGX'],
     '智力': ['智力', 'int1', 'INT1'],
     '精神': ['精神', '精神'],
+    '灵性': ['灵性', '灵性值', 'lingx', 'mp', 'MP'],
+    '灵性值': ['灵性值', '灵性', 'lingx', 'mp', 'MP'],
   };
 
   // 理智相关属性名
@@ -124,7 +126,7 @@ if (!ext) {
   // .gm 检定排除列表
   const GM_EXCLUDED_TARGETS = {
     '序列': true, '消化': true, '消化度': true, '位格': true,
-    '理智': true, '血量': true, '血量上限': true, '灵性': true,
+    '理智': true, '血量': true, '血量上限': true, '灵性': true, '灵性值': true,
     '神性补正': true, 'san': true, 'SAN': true, 'sanity': true,
   };
 
